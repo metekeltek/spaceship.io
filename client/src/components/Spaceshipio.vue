@@ -7,12 +7,6 @@
             style="border: 1px solid black"
         >
         </canvas>
-        <p>
-            <input v-on:keyup.enter="move('up')" />
-            <input v-on:keydown.enter="move('down')" />
-            <input v-on:keyleft.enter="move('left')" />
-            <input v-on:keyright.enter="move('right')" />
-        </p>
     </div>
 </template>
 
@@ -31,24 +25,70 @@
             };
         },
         created() {
+            console.log("CREATING.START");
             this.socket = io("http://localhost:3000");
+            console.log("CREATING.FINISH");
         },
         mounted() {
+            console.log("MOUNNTED.START");
+            let startX = 40 + Math.random() * 560;
+            let startY = 40 + Math.random() * 400;
+            this.socket.emit("newPlayer", { x: startX, y: startY });
+            console.log("1");
             this.context = this.$refs.game.getContext("2d");
-            this.socket.on("position", (data) => {
-                this.position = data;
+            // this.socket.on("position", (data) => {
+            //     this.position = data;
+            // });
+            console.log("2");
+
+            this.socket.on("updatePlayers", (players) => {
                 this.context.clearRect(
                     0,
                     0,
                     this.$refs.game.width,
                     this.$refs.game.height
                 );
-                this.context.fillRect(this.position.x, this.position.y, 20, 20);
+                for (let id in players) {
+                    this.context.fillRect(players[id].x, players[id].y, 20, 20);
+                }
             });
+            console.log("3");
+            var that = this;
+            document.addEventListener("keyup", function (eventData) {
+                if (eventData.key == "ArrowUp") {
+                    that.move("up");
+                }
+                if (eventData.key == "ArrowDown") {
+                    that.move("down");
+                }
+                if (eventData.key == "ArrowLeft") {
+                    that.move("left");
+                }
+                if (eventData.key == "ArrowRight") {
+                    that.move("right");
+                }
+                if (eventData.key == "w") {
+                    that.move("up");
+                }
+                if (eventData.key == "s") {
+                    that.move("down");
+                }
+                if (eventData.key == "a") {
+                    that.move("left");
+                }
+                if (eventData.key == "d") {
+                    that.move("right");
+                }
+            });
+            console.log("4");
         },
         methods: {
             move(direction) {
-                this.socket.emit("move", direction);
+                let obj = {
+                    moveDirection: direction,
+                    id: this.socket.id,
+                };
+                this.socket.emit("move", obj);
             },
         },
     };

@@ -18,30 +18,72 @@
             return {
                 socket: {},
                 context: {},
-                position: {
-                    x: 0,
-                    y: 0,
-                },
             };
         },
+        props: {
+            width: {
+                type: String,
+                required: true,
+            },
+            height: {
+                type: String,
+                required: true,
+            },
+        },
         created() {
-            console.log("CREATING.START");
             this.socket = io("http://localhost:3000");
-            console.log("CREATING.FINISH");
         },
         mounted() {
-            console.log("MOUNNTED.START");
+            this.context = this.$refs.game.getContext("2d");
+            var global = this;
+            var keys = [];
+
             let startX = 40 + Math.random() * 560;
             let startY = 40 + Math.random() * 400;
             this.socket.emit("newPlayer", { x: startX, y: startY });
-            console.log("1");
-            this.context = this.$refs.game.getContext("2d");
-            // this.socket.on("position", (data) => {
-            //     this.position = data;
-            // });
-            console.log("2");
 
             this.socket.on("updatePlayers", (players) => {
+                global.render(players);
+                global.move(keys);
+            });
+
+            document.addEventListener("keydown", function (eventData) {
+                keys[eventData.key] = true;
+            });
+            document.addEventListener("keyup", function (eventData) {
+                keys[eventData.key] = false;
+            });
+        },
+        methods: {
+            //60 times per second
+            move(keys) {
+                if (keys["w"] == true) {
+                    this.socket.emit("move", {
+                        moveDirection: "up",
+                        id: this.socket.id,
+                    });
+                }
+                if (keys["s"] == true) {
+                    this.socket.emit("move", {
+                        moveDirection: "down",
+                        id: this.socket.id,
+                    });
+                }
+                if (keys["a"] == true) {
+                    this.socket.emit("move", {
+                        moveDirection: "left",
+                        id: this.socket.id,
+                    });
+                }
+                if (keys["d"] == true) {
+                    this.socket.emit("move", {
+                        moveDirection: "right",
+                        id: this.socket.id,
+                    });
+                }
+            },
+            //60 times per second
+            render(players) {
                 this.context.clearRect(
                     0,
                     0,
@@ -51,44 +93,6 @@
                 for (let id in players) {
                     this.context.fillRect(players[id].x, players[id].y, 20, 20);
                 }
-            });
-            console.log("3");
-            var that = this;
-            document.addEventListener("keyup", function (eventData) {
-                if (eventData.key == "ArrowUp") {
-                    that.move("up");
-                }
-                if (eventData.key == "ArrowDown") {
-                    that.move("down");
-                }
-                if (eventData.key == "ArrowLeft") {
-                    that.move("left");
-                }
-                if (eventData.key == "ArrowRight") {
-                    that.move("right");
-                }
-                if (eventData.key == "w") {
-                    that.move("up");
-                }
-                if (eventData.key == "s") {
-                    that.move("down");
-                }
-                if (eventData.key == "a") {
-                    that.move("left");
-                }
-                if (eventData.key == "d") {
-                    that.move("right");
-                }
-            });
-            console.log("4");
-        },
-        methods: {
-            move(direction) {
-                let obj = {
-                    moveDirection: direction,
-                    id: this.socket.id,
-                };
-                this.socket.emit("move", obj);
             },
         },
     };

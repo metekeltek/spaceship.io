@@ -14,85 +14,90 @@
     import io from "socket.io-client";
     export default {
         name: "Spaceshipio",
-        data() {
-            return {
-                socket: {},
-                context: {},
-            };
-        },
-        props: {
-            width: {
-                type: String,
-                required: true,
-            },
-            height: {
-                type: String,
-                required: true,
-            },
-        },
         created() {
             this.socket = io("http://localhost:3000");
         },
         mounted() {
             this.context = this.$refs.game.getContext("2d");
-            var global = this;
-            var keys = [];
+            const global = this;
+            var keys = {};
 
-            let startX = 40 + Math.random() * 560;
-            let startY = 40 + Math.random() * 400;
-            this.socket.emit("newPlayer", { x: startX, y: startY });
+            this.socket.emit("newPlayer");
 
             this.socket.on("updatePlayers", (players) => {
                 global.render(players);
-                global.move(keys);
             });
 
             document.addEventListener("keydown", function (eventData) {
                 keys[eventData.key] = true;
+                global.move(keys);
             });
             document.addEventListener("keyup", function (eventData) {
                 keys[eventData.key] = false;
+                global.move(keys);
             });
         },
         methods: {
             //60 times per second
             move(keys) {
-                if (keys["w"] == true) {
-                    this.socket.emit("move", {
-                        moveDirection: "up",
-                        id: this.socket.id,
-                    });
-                }
-                if (keys["s"] == true) {
-                    this.socket.emit("move", {
-                        moveDirection: "down",
-                        id: this.socket.id,
-                    });
-                }
-                if (keys["a"] == true) {
-                    this.socket.emit("move", {
-                        moveDirection: "left",
-                        id: this.socket.id,
-                    });
-                }
-                if (keys["d"] == true) {
-                    this.socket.emit("move", {
-                        moveDirection: "right",
-                        id: this.socket.id,
-                    });
-                }
+                this.socket.emit("move", {
+                    moveDirection: keys,
+                    id: this.socket.id,
+                });
             },
-            //60 times per second
+            //60 times per second: clears canvas and draws canvas again
             render(players) {
-                this.context.clearRect(
+                this.context.fillStyle = "#111";
+                this.context.fillRect(
                     0,
                     0,
                     this.$refs.game.width,
                     this.$refs.game.height
                 );
                 for (let id in players) {
-                    this.context.fillRect(players[id].x, players[id].y, 20, 20);
+                    this.draw(players[id]);
                 }
+            },
+            draw(spaceship) {
+                const triangleCenterX =
+                    spaceship.position.x + 0.5 * spaceship.size.width;
+                const triangleCenterY =
+                    spaceship.position.y + 0.5 * spaceship.size.height;
+
+                this.context.save();
+                this.context.translate(triangleCenterX, triangleCenterY);
+                this.context.rotate(spaceship.angle);
+                this.context.lineWidth = 1;
+                this.context.beginPath();
+                // Triangle
+                this.context.moveTo(0, -spaceship.size.height / 2);
+                this.context.lineTo(
+                    -spaceship.size.width / 2,
+                    spaceship.size.height / 2
+                );
+                this.context.lineTo(
+                    spaceship.size.width / 2,
+                    spaceship.size.height / 2
+                );
+                this.context.closePath();
+
+                this.context.strokeStyle = spaceship.color;
+                this.context.stroke();
+
+                // Flame for engine
+                if (spaceship.engineOn) {
+                    const fireYPos = spaceship.size.height / 2 + 5;
+                    const fireXPos = spaceship.size.width * 0.25;
+                    this.context.beginPath();
+                    this.context.moveTo(-fireXPos, fireYPos);
+                    this.context.lineTo(fireXPos, fireYPos);
+                    this.context.lineTo(0, fireYPos + Math.random() * 50);
+                    this.context.lineTo(-fireXPos, fireYPos);
+                    this.context.closePath();
+                    this.context.fillStyle = "orange";
+                    this.context.fill();
+                }
+                this.context.restore();
             },
         },
     };

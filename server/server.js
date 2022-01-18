@@ -1,3 +1,4 @@
+const Spaceship = require("./Spaceship.js");
 const Express = require("express")();
 const Http = require("http").Server(Express);
 
@@ -8,6 +9,7 @@ const io = require("socket.io")(Http, {
 });
 
 let players = {};
+const THRUST = 5;
 
 io.on("connection", connection);
 
@@ -16,29 +18,16 @@ Http.listen(3000, () => {
 });
 
 function connection(socket) {
-    socket.on("newPlayer", (data) => {
-        players[socket.id] = data;
-        updatePlayers();
+    socket.on("newPlayer", () => {
+        players[socket.id] = new Spaceship();
     });
     socket.on("disconnect", function () {
         delete players[socket.id];
-        updatePlayers();
     });
     socket.on("move", (data) => {
-        switch (data.moveDirection) {
-            case "right":
-                players[data.id].x += 5;
-                break;
-            case "left":
-                players[data.id].x -= 5;
-                break;
-            case "up":
-                players[data.id].y -= 5;
-                break;
-            case "down":
-                players[data.id].y += 5;
-                break;
-        }
+        players[data.id].engineOn = data.moveDirection["w"];
+        players[data.id].rotatingLeft = data.moveDirection["a"];
+        players[data.id].rotatingRight = data.moveDirection["d"];
     });
 }
 
@@ -52,5 +41,8 @@ function update() {
 setInterval(loop, 1000 / 60);
 
 function updatePlayers() {
+    for (let id in players) {
+        players[id].moveSpaceShip(THRUST);
+    }
     io.emit("updatePlayers", players);
 }

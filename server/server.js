@@ -9,7 +9,6 @@ const io = require("socket.io")(Http, {
 });
 
 let players = {};
-const THRUST = 5;
 
 io.on("connection", connection);
 
@@ -42,7 +41,7 @@ setInterval(loop, 1000 / 60);
 
 function updatePlayers() {
     for (let id in players) {
-        players[id].moveSpaceShip(THRUST);
+        players[id].moveSpaceShip();
     }
     io.emit("updatePlayers", players);
 }

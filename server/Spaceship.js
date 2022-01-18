@@ -6,6 +6,9 @@ class Spaceship {
             x: 40 + Math.random() * 1000,
             y: 40 + Math.random() * 400,
         };
+        this.turningSpeed = 7;
+        this.thrust = 10;
+        this.maxspeed = 10;
         this.angle = 0;
         this.engineOn = false;
         this.rotatingLeft = false;
@@ -16,7 +19,7 @@ class Spaceship {
         };
     }
 
-    moveSpaceShip(THRUST) {
+    moveSpaceShip() {
         // Angle has to be in radians
         const degToRad = Math.PI / 180;
         // Change the position based on velocity
@@ -26,13 +29,25 @@ class Spaceship {
         this.position.x = (1000 + this.position.x) % 1000;
         this.position.y = (500 + this.position.y) % 500;
         // Turning
-        const turningSpeed = 7;
-        if (this.rotatingLeft) this.angle -= degToRad * turningSpeed;
-        if (this.rotatingRight) this.angle += degToRad * turningSpeed;
+        if (this.rotatingLeft) this.angle -= degToRad * this.turningSpeed;
+        if (this.rotatingRight) this.angle += degToRad * this.turningSpeed;
         // Acceleration
         if (this.engineOn) {
-            this.velocity.x += (THRUST / 100) * Math.sin(this.angle);
-            this.velocity.y -= (THRUST / 100) * Math.cos(this.angle);
+            this.velocity.x += (this.thrust / 100) * Math.sin(this.angle);
+            this.velocity.y -= (this.thrust / 100) * Math.cos(this.angle);
+
+            if (this.velocity.x > this.maxspeed) {
+                this.velocity.x = this.maxspeed;
+            }
+            if (this.velocity.y > this.maxspeed) {
+                this.velocity.y = this.maxspeed;
+            }
+            if (this.velocity.x < -this.maxspeed) {
+                this.velocity.x = -this.maxspeed;
+            }
+            if (this.velocity.y < -this.maxspeed) {
+                this.velocity.y = -this.maxspeed;
+            }
         }
     }
 }

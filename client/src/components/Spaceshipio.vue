@@ -24,13 +24,16 @@
 
             this.socket.emit("newPlayer");
 
-            this.socket.on("updatePlayers", (players) => {
-                global.render(players);
+            this.socket.on("updateFrontend", (data) => {
+                global.render(data.players, data.projectiles);
             });
 
             document.addEventListener("keydown", function (eventData) {
                 keys[eventData.key] = true;
                 global.move(keys);
+                if (eventData.keyCode == 32) {
+                    global.shoot();
+                }
             });
             document.addEventListener("keyup", function (eventData) {
                 keys[eventData.key] = false;
@@ -45,8 +48,13 @@
                     id: this.socket.id,
                 });
             },
+            shoot() {
+                this.socket.emit("shoot", {
+                    id: this.socket.id,
+                });
+            },
             //60 times per second: clears canvas and draws canvas again
-            render(players) {
+            render(players, projectiles) {
                 this.context.fillStyle = "#111";
                 this.context.fillRect(
                     0,
@@ -55,16 +63,20 @@
                     this.$refs.game.height
                 );
                 for (let id in players) {
-                    this.draw(players[id]);
+                    this.drawPlayer(players[id]);
                 }
+                projectiles.forEach((projectile) => {
+                    this.drawProjectile(projectile);
+                });
             },
-            draw(spaceship) {
+            drawPlayer(spaceship) {
+                this.context.save();
+
                 const triangleCenterX =
                     spaceship.position.x + 0.5 * spaceship.size.width;
                 const triangleCenterY =
                     spaceship.position.y + 0.5 * spaceship.size.height;
 
-                this.context.save();
                 this.context.translate(triangleCenterX, triangleCenterY);
                 this.context.rotate(spaceship.angle);
                 this.context.lineWidth = 1;
@@ -98,6 +110,19 @@
                     this.context.fill();
                 }
                 this.context.restore();
+            },
+            drawProjectile(projectile) {
+                this.context.beginPath();
+                this.context.arc(
+                    projectile.position.x + 0.5 * 20,
+                    projectile.position.y + 0.5 * 30,
+                    projectile.radius,
+                    0,
+                    2 * Math.PI
+                );
+                this.context.strokeStyle = projectile.color;
+                this.context.closePath();
+                this.context.stroke();
             },
         },
     };

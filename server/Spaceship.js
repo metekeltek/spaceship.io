@@ -36,6 +36,7 @@ class Spaceship {
             this.velocity.x += (this.thrust / 100) * Math.sin(this.angle);
             this.velocity.y -= (this.thrust / 100) * Math.cos(this.angle);
 
+            //Maxspeed
             if (this.velocity.x > this.maxspeed) {
                 this.velocity.x = this.maxspeed;
             }
